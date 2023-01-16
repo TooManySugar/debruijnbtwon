@@ -1,27 +1,27 @@
 package debruijnbtwon_test
 
 import (
+	"debruijnbtwon"
 	"fmt"
 	"testing"
-	"debruijnbtwon"
 )
 
-func utilTestFindB2NMustErr(t* testing.T, n uint64, expectedErrText string) {
+func utilTestFindB2NMustErr(t *testing.T, n uint64, expectedErrText string) {
 	err := debruijnbtwon.FindDeBruijnSeqK2N(n, nil)
 	if err == nil {
 		t.Fatal("Expected error got nil")
 	}
 	if err.Error() != expectedErrText {
 		t.Fatalf("Expected error:\n%#v\ngot error:\n%#v",
-		         expectedErrText,
-		         err.Error())
+			expectedErrText,
+			err.Error())
 	}
 	fmt.Printf("    %s\n", err.Error())
 }
 
-func magicTestNFactory(t *testing.T, n uint64) (func (magic uint64) bool,
-                                                *uint64,
-                                                error) {
+func magicTestNFactory(t *testing.T, n uint64) (func(magic uint64) bool,
+	*uint64,
+	error) {
 
 	if n < 1 || n > 6 {
 		return nil, nil, fmt.Errorf("n is out of range [1, 6]")
@@ -32,23 +32,23 @@ func magicTestNFactory(t *testing.T, n uint64) (func (magic uint64) bool,
 	//    total ammount of subsequences
 	pow2n := uint64(1 << n)
 	shift := pow2n - n
-	mask  := pow2n - 1
+	mask := pow2n - 1
 
 	notMagicFormat :=
 		fmt.Sprintf("\n0x%%0%dX\n0b%%0%db\nis not a De Bruijn sequence",
-		            pow2n / 4,
-		            pow2n)
+			pow2n/4,
+			pow2n)
 
-	notMagic := func (magic uint64) {
+	notMagic := func(magic uint64) {
 		t.Fatalf(notMagicFormat, magic, magic)
 	}
 
 	count := uint64(0)
 
-	magicTestN := func (magic uint64) bool {
+	magicTestN := func(magic uint64) bool {
 
 		// If first bit is 0 where is no magic. sad
-		if magic & 1 == 0 {
+		if magic&1 == 0 {
 			notMagic(magic)
 		}
 

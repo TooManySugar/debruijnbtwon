@@ -1,11 +1,11 @@
 package debruijnbtwon_examples_test
 
 import (
-	"os"
-	"io"
-	"fmt"
-	"testing"
 	"bytes"
+	"fmt"
+	"io"
+	"os"
+	"testing"
 
 	db2n "debruijnbtwon"
 )
@@ -68,14 +68,12 @@ func WriteB24SubsequencesExample(w io.Writer) {
 	db2n.FindDeBruijnSeqK2N(n, printN4SubsequenceVisitor)
 }
 
-
 // Examples running tests
 // You can execute example using:
 //     $ go test . -v -run <example name>
 // Or run them all by:
 //     $ go test . -v
 ////////////////////////////////////////////////////////////////////////////////
-
 
 func TestCountB25Example(t *testing.T) {
 	res := CountB25Example()
@@ -114,8 +112,8 @@ func (vw *ValidationWriter) Write(b []byte) (int, error) {
 }
 
 func utilTestWritingFuncOutput(t *testing.T,
-                                f func(io.Writer),
-                                outputRefPath string) {
+	f func(io.Writer),
+	outputRefPath string) {
 
 	refFile, err := os.Open(outputRefPath)
 	if err != nil {
@@ -123,7 +121,7 @@ func utilTestWritingFuncOutput(t *testing.T,
 	}
 	defer refFile.Close()
 
-	vw := ValidationWriter {
+	vw := ValidationWriter{
 		w: os.Stdout,
 		r: refFile,
 		t: t,
@@ -148,7 +146,6 @@ func utilUpdateWritingFuncOutput(f func(io.Writer), outputRefPath string) {
 
 	f(refFile)
 }
-
 
 func TestWriteB24Example(t *testing.T) {
 	f := WriteB24Example

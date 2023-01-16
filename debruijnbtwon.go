@@ -6,9 +6,9 @@ import (
 
 type treeSearcher struct {
 	// this 4 values are all constant for n
-	width uint64
-	uMasks []uint64
-	sMasks []uint64
+	width   uint64
+	uMasks  []uint64
+	sMasks  []uint64
 	numMask uint64
 
 	// set of seen before subsequences
@@ -27,7 +27,7 @@ type treeSearcher struct {
 // offset is distance from 'root' to 'leaf' at current 'node', 0 => is leaf
 func (ts *treeSearcher) step(value uint64, ownNum uint64, offset uint64) {
 	if offset == 0 {
-		if value & 1 == 0 {
+		if value&1 == 0 {
 			return
 		}
 
@@ -47,7 +47,7 @@ func (ts *treeSearcher) step(value uint64, ownNum uint64, offset uint64) {
 	nextNum = (ownNum << 1) & ts.numMask
 	if !ts.seen[nextNum] {
 		ts.seen[nextNum] = true
-		ts.step(value0, nextNum, offset - 1)
+		ts.step(value0, nextNum, offset-1)
 		ts.seen[nextNum] = false
 	}
 
@@ -63,14 +63,14 @@ func (ts *treeSearcher) step(value uint64, ownNum uint64, offset uint64) {
 	nextNum |= 1
 	if !ts.seen[nextNum] {
 		ts.seen[nextNum] = true
-		ts.step(value0 | ts.sMasks[offset], nextNum, offset - 1)
+		ts.step(value0|ts.sMasks[offset], nextNum, offset-1)
 		ts.seen[nextNum] = false
 	}
 }
 
 func (ts *treeSearcher) initMasks() {
 
-	var sz uint64 = 1 << ts.width + 1
+	var sz uint64 = 1<<ts.width + 1
 	ts.uMasks = make([]uint64, sz)
 	ts.sMasks = make([]uint64, sz)
 
@@ -110,20 +110,20 @@ func FindDeBruijnSeqK2N(n uint64, onFound func(uint64) bool) error {
 		return ErrorOutOfRange{n}
 	}
 
-	ts := treeSearcher {
+	ts := treeSearcher{
 		width: n,
 
-		seen: make([]bool, 1 << n),
+		seen:    make([]bool, 1<<n),
 		onFound: onFound,
-		stop: false,
+		stop:    false,
 
-		numMask: uint64(1) << n - 1,
+		numMask: uint64(1)<<n - 1,
 	}
 	ts.initMasks()
 
 	// starting 'node'
 	ts.seen[0] = true
 
-	ts.step(uint64(0), 0, 1 << n - n)
+	ts.step(uint64(0), 0, 1<<n-n)
 	return nil
 }
