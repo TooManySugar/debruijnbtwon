@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+type RandBitSource interface {
+	Bit() bool
+}
+
 type treeSearcher struct {
 	// this 4 values are all constant for n
 	width   uint64
@@ -20,6 +24,9 @@ type treeSearcher struct {
 
 	// stop search flag
 	stop bool
+
+	// random source used only in randStep
+	randSource RandBitSource
 }
 
 // Recursive search on non-objective binary tree (there is no b-tree only value)
@@ -68,6 +75,55 @@ func (ts *treeSearcher) step(value uint64, ownNum uint64, offset uint64) {
 	}
 }
 
+// randStep
+// is the same as step but visit nodes in order relying on randSource
+func (ts *treeSearcher) randStep(value uint64, ownNum uint64, offset uint64) {
+	if offset == 0 {
+		if value&1 == 0 {
+			return
+		}
+
+		ts.stop = ts.onFound(value)
+		return
+	}
+
+	value0 := value & ts.uMasks[offset]
+	value1 := value0|ts.sMasks[offset]
+	// ownNum
+	// vvvvvv
+	// _xxxxx0
+	//  ^^^^^^
+	//  nextNum0
+	nextNum0 := (ownNum << 1) & ts.numMask
+	// ownNum
+	// vvvvvv
+	// _xxxxx1
+	//  ^^^^^^
+	//  nextNum1
+	nextNum1 := nextNum0 | 1
+
+	if ts.randSource.Bit() {
+		value0, value1 = value1, value0
+		nextNum0, nextNum1 = nextNum1, nextNum0
+	}
+
+	if !ts.seen[nextNum0] {
+		ts.seen[nextNum0] = true
+		ts.randStep(value0, nextNum0, offset-1)
+		ts.seen[nextNum0] = false
+	}
+
+	if ts.stop {
+		return
+	}
+
+	if !ts.seen[nextNum1] {
+		ts.seen[nextNum1] = true
+		ts.randStep(value1, nextNum1, offset-1)
+		ts.seen[nextNum1] = false
+	}
+}
+
 func (ts *treeSearcher) initMasks() {
 
 	var sz uint64 = 1<<ts.width + 1
@@ -96,6 +152,34 @@ func (e ErrorOutOfRange) Error() string {
 	return fmt.Sprintf("n must be in range [1, 6] got: %d", e.value)
 }
 
+func doFindDeBruijnSeqK2N(n uint64, randSource RandBitSource, onFound func(uint64) bool) error {
+	if n > 6 || n < 1 {
+		return ErrorOutOfRange{n}
+	}
+
+	ts := treeSearcher{
+		width: n,
+
+		seen:       make([]bool, 1<<n),
+		onFound:    onFound,
+		stop:       false,
+
+		numMask:    uint64(1)<<n - 1,
+		randSource: randSource,
+	}
+	ts.initMasks()
+
+	ts.seen[0] = true
+
+	if randSource == nil {
+		ts.step(uint64(0), 0, 1<<n-n)
+	} else {
+		ts.randStep(uint64(0), 0, 1<<n-n)
+	}
+
+	return nil
+}
+
 // Search on non-objective binary tree to find B(2,n) De Bruijn Sequences
 //     n - lenght of all possible subsequences
 //     onFound - function to handle found De Bruijn sequence
@@ -106,24 +190,12 @@ func (e ErrorOutOfRange) Error() string {
 // returns ErrorOutOfRange if n not in range [1, 6] otherwise returns nil
 //
 func FindDeBruijnSeqK2N(n uint64, onFound func(uint64) bool) error {
-	if n > 6 || n < 1 {
-		return ErrorOutOfRange{n}
+	return doFindDeBruijnSeqK2N(n, nil, onFound)
+}
+
+func RandFindDeBruijnSeqK2N(n uint64, randSource RandBitSource, onFound func(uint64) bool) error {
+	if randSource == nil {
+		return fmt.Errorf("randSource can not be nil")
 	}
-
-	ts := treeSearcher{
-		width: n,
-
-		seen:    make([]bool, 1<<n),
-		onFound: onFound,
-		stop:    false,
-
-		numMask: uint64(1)<<n - 1,
-	}
-	ts.initMasks()
-
-	// starting 'node'
-	ts.seen[0] = true
-
-	ts.step(uint64(0), 0, 1<<n-n)
-	return nil
+	return doFindDeBruijnSeqK2N(n, randSource, onFound)
 }
